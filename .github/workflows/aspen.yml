@@ -6,60 +6,32 @@ on:
   workflow_dispatch:
 
 jobs:
-  gate:
-    name: Gate — external access control
+  aspen:
+    name: Aspen — gate, guardian, and adapt
     runs-on: ubuntu-latest
     permissions:
+      contents: write # required for guardian's commit-back
       pull-requests: write # needed for gate_comment_on_failure
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Bandit
+        run: |
+          pip install 'bandit[sarif]'
+          bandit -r . -f sarif -o results.sarif --exit-zero
+
+      # Single connector run: the gate check always runs first. If the
+      # committer is compliant, it proceeds straight into Mode A, which
+      # has Guardian rewrite the AI instructions from the scan results
+      # and records the same findings' CWEs against the commit via Adapt.
       - uses: SecurityJourney/aspen-connector@v0.2.0
         with:
           api_token: ${{ secrets.SECURITYJOURNEY_TOKEN }}
           enforce_gate: 'true'
-
-  guardian:
-    name: Guardian — rewrite AI instructions from scan results
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write # required for commit-back
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Run Bandit
-        run: |
-          pip install 'bandit[sarif]'
-          bandit -r . -f sarif -o results.sarif --exit-zero
-
-      - uses: SecurityJourney/aspen-connector@v0.2.0
-        with:
-          api_token: ${{ secrets.SECURITYJOURNEY_TOKEN }}
           scan_results_path: results.sarif
           instruction_file_path: .github/ai-instructions.md
-          scanner_type: bandit
-
-  adapt:
-    name: Adapt — record CWEs from scan results
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Run Bandit
-        run: |
-          pip install 'bandit[sarif]'
-          bandit -r . -f sarif -o results.sarif --exit-zero
-
-      - uses: SecurityJourney/aspen-connector@v0.2.0
-        with:
-          api_token: ${{ secrets.SECURITYJOURNEY_TOKEN }}
-          scan_results_path: results.sarif
           scanner_type: bandit
