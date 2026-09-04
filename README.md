@@ -2,13 +2,13 @@
 
 A minimal Flask blog app used to demo [aspen-connector](https://github.com/SecurityJourney/aspen-connector) in CI.
 
-`.github/workflows/aspen.yml` runs Bandit and feeds the results into a single connector step on every push/PR:
+`.github/workflows/aspen.yml` runs Snyk Code and feeds the results into a single connector step on `opened`/`synchronize`/`reopened` pull request events:
 
 - **gate** — enforces the tenant's external access control policy for the committer; runs first
-- **guardian** — rewrites `.github/ai-instructions.md` from the Bandit findings (Mode A)
+- **guardian** — rewrites `.github/ai-instructions.md` from the Snyk findings (Mode A)
 - **adapt** — records the same findings' CWEs against the commit, as part of Mode A
 
-Requires a `SECURITYJOURNEY_TOKEN` repo secret with an Aspen API token.
+Requires a `SECURITYJOURNEY_TOKEN` repo secret with an Aspen API token, and a `SNYK_TOKEN` repo secret.
 
 ## Running locally
 

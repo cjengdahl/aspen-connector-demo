@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 .venv/
 venv/
-results.sarif
+snyk-code-raw.json
